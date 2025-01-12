@@ -33,9 +33,9 @@ Follow the instructions below to get started:
 
 1. Fork this repo.
 
-2. Ensure you have the Dockerfiles written that are outlined in the [Instructions to Deploy](Docs/Instructions-To-Deploy.md).
+2. Ensure you have the Dockerfiles written that are outlined in the [Instructions to Write API Dockerfile](./Docs/Instructions-To-Write-API-Dockerfile.md) and [Instructions to Write Dashboard Dockerfile](./Docs/Instructions-To-Write-Dashboard-Dockerfile.md).
 
-3. Build and start the Saleor platform by following the deployment steps in [Instructions to Deploy](Docs/Instructions-To-Deploy.md).
+3. Build and start the Saleor platform by following the deployment steps in [Instructions to Deploy](./Docs/Instructions-To-Deploy-Compose.md).
 
 4. Access the application:
    - **API**: [http://localhost:8000](http://localhost:8000)
@@ -48,12 +48,27 @@ Follow the instructions below to get started:
 
 ## Supporting Documentation
 
-### [Instructions to Deploy](Docs/Instructions-To-Deploy.md)
+### [Instructions to Deploy](Docs/Instructions-To-Deploy-Compose.md)
 This guide provides step-by-step instructions for setting up the Saleor platform, including:
 
 - Preparing your environment.
 - Building and running the Docker Compose stack.
 - Initializing the database and creating an admin user.
+
+### [Instructions to Write API Dockerfile](./Docs/Instructions-To-Write-API-Dockerfile.md)
+This guide provides step-by-step instructions for writing the Dockerfile for the Saleor API, including:
+- Installing Dependencies
+- Single-stage build
+- Running the API
+
+### [Instructions to Write Dashboard Dockerfile](./Docs/Instructions-To-Write-Dashboard-Dockerfile.md)
+This guide provides step-by-step instructions for writing the Dockerfile for the Saleor Dashboard, including:
+- Installing Dependencies
+- Multi-stage builds
+- Running the Saleor Dashboard
+
+### [Instructions to Build CI/CD Pipelines](./Docs/Instructions-To-Build-CICD-Pipelines.md)
+This guide serves as a instructions and requirements for how your CI/CD Pipelines should be built and what outcome they should achieve.
 
 ### [Saleor Platform Documentation](Docs/Saleor-Platform-docs.md)
 Detailed documentation on:
