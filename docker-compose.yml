@@ -1,0 +1,92 @@
+######################################################################################################################################################
+# docker-compose.yml: Saleor Application Compose Stack
+# Purpose: Docker compose stack for the saleor applicationfor use in Code:You's DevOps w/ AWS Final Project which utilizes Saleor to demonstrate
+#   students understanding of Docker, CI/CD pipelines, Github Workflows, and AWS deployment.
+# Written By: James D. Glosser (demonicurges05@gmail.com)
+######################################################################################################################################################
+services:
+  api:
+    image: saleor-api
+    build:
+      context: ./saleor-api
+      dockerfile: Dockerfile
+    env_file:
+      - common.env
+      - backend.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - saleor-media:/app/media 
+    networks:
+      - saleor-backend-tier
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  dashboard:
+    image: saleor-dashboard
+    build:
+      context: ./saleor-dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "9000:80"
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - saleor-backend-tier
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=saleor
+      - POSTGRES_PASSWORD=saleor
+    ports:
+      - "5432:5432"
+    volumes:
+      - saleor-db:/var/lib/postgresql/data\
+      - ./replica_user.sql:/docker-entrypoint-initdb.d/replica_user.sql
+    restart: unless-stopped
+    networks:
+      - saleor-backend-tier
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saleor -d saleor"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - saleor-redis:/data
+    restart: unless-stopped
+    networks:
+      - saleor-backend-tier
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3 
+
+networks:
+  saleor-backend-tier:
+
+volumes:
+  saleor-db:
+    driver: local
+  saleor-redis:
+    driver: local
+  saleor-media:
+    driver: local

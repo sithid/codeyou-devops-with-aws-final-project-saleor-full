@@ -66,4 +66,6 @@ COPY --from=builder /app/build/ /app/
 COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY ./nginx/replace-env-vars.sh /docker-entrypoint.d/50-replace-env-vars.sh
 
+RUN chmod +x /docker-entrypoint.d/50-replace-env-vars.sh
+
 EXPOSE 9000

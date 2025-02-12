@@ -31,21 +31,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+COPY . .
 
-RUN curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.8.4 python -
-ENV PATH="$PATH:/root/.local/bin"
-
-COPY pyproject.toml poetry.lock ./
+RUN pip install poetry==1.8.4
 RUN poetry config virtualenvs.create false
+COPY poetry.lock pyproject.toml /app/
 RUN poetry install --no-root
 
 RUN groupadd -g 1001 saleor
 RUN useradd -u 1001 -g saleor -ms /bin/bash saleor
 RUN chown -R saleor:saleor /app
-
-USER saleor
-WORKDIR /app
-COPY . .
 
 ARG STATIC_URL
 ENV STATIC_URL=${STATIC_URL:-/static/}
