@@ -1,0 +1,51 @@
+name: "saleor pipeline -develop"
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  TAG: develop
+
+jobs:
+  analysis:
+    name: "environment analysis"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Python Setup
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install Dependencies
+        run: pip install flake8 pip-audit
+
+      - name: Static Code Analysis
+        run: flake8. > flake8_log.txt || true
+
+      - name: Dependency Analysis
+        run: pip-audit > audit_log.txt || true
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:${{ env.TAG }} -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:${{ env.TAG }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:${{ env.TAG }} -t ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:${{ env.TAG }}
+      
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+
+      - name: Scan Docker Image
+        run: |
+          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-api:${{ env.TAG }}
+          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:${{ env.TAG }}
+
+      - name: Push Docker Image
+        run: |
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push ${{ secrets.DOCKER_USERNAME }}/saleor-api:${{ env.TAG }} 
+          docker push ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:${{ env.TAG }}
