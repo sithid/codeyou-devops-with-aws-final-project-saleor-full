@@ -29,10 +29,16 @@ jobs:
         run: pip install flake8 pip-audit
 
       - name: Static Code Analysis
-        run: flake8 . > flake8_log.txt || true
+        run: |
+          flake8 . > flake8_log.txt || true
+          echo "Static code analysis completed"
+          cat flake8_log.txt
 
       - name: Dependency Analysis
-        run: pip-audit > audit_log.txt || true
+        run: |
+          pip-audit > audit_log.txt || true
+          echo "Dependency analysis completed"
+          cat audit_log.txt
 
       - name: Build Docker Image
         run: |
