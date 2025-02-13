@@ -29,7 +29,7 @@ jobs:
         run: pip install flake8 pip-audit
 
       - name: Static Code Analysis
-        run: flake8. > flake8_log.txt || true
+        run: flake8 . > flake8_log.txt || true
 
       - name: Dependency Analysis
         run: pip-audit > audit_log.txt || true
@@ -46,7 +46,7 @@ jobs:
           echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
           sudo apt-get update
           sudo apt-get install trivy
-          
+
       - name: Scan Docker Image
         run: |
           trivy image $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG
