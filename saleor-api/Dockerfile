@@ -41,6 +41,7 @@ RUN poetry install --no-root
 RUN groupadd -g 1001 saleor
 RUN useradd -u 1001 -g saleor -ms /bin/bash saleor
 RUN chown -R saleor:saleor /app
+USER saleor
 
 ARG STATIC_URL
 ENV STATIC_URL=${STATIC_URL:-/static/}
