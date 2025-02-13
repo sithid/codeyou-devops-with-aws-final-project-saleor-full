@@ -11,7 +11,7 @@ env:
   API_IMAGE: saleor-api
   DASHBOARD_IMAGE: saleor-dashboard
   IMAGE_TAG: develop
-  
+
 jobs:
   analysis:
     name: "environment analysis"
@@ -41,8 +41,12 @@ jobs:
 
       - name: Install Trivy
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
-
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+          
       - name: Scan Docker Image
         run: |
           trivy image $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG
