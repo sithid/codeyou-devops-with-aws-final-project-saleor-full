@@ -1,0 +1,65 @@
+name: "saleor pipeline -develop"
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  API_IMAGE: saleor-api
+  DASHBOARD_IMAGE: saleor-dashboard
+  IMAGE_TAG: develop
+
+jobs:
+  analysis:
+    name: "environment analysis"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Python Setup
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install Dependencies
+        run: pip install flake8 pip-audit
+
+      - name: Static Code Analysis
+        run: |
+          flake8 . > flake8_log.txt || true
+          echo "Static code analysis completed"
+          cat flake8_log.txt
+
+      - name: Dependency Analysis
+        run: |
+          pip-audit > audit_log.txt || true
+          echo "Dependency analysis completed"
+          cat audit_log.txt
+
+      - name: Build Docker Image
+        run: |
+          docker build -t $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG $API_IMAGE
+          docker build -t $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG $DASHBOARD_IMAGE
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+
+      - name: Scan Docker Image
+        run: |
+          trivy image $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG
+          trivy image $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG
+
+      - name: Push Docker Image
+        run: |
+          echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+          docker push $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG
+          docker push $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG
