@@ -4,9 +4,14 @@ on:
   push:
     branches:
       - develop
+
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  API_IMAGE: saleor-api
+  DASHBOARD_IMAGE: saleor-dashboard
+  IMAGE_TAG: develop
+  
 jobs:
   analysis:
     name: "environment analysis"
@@ -31,8 +36,8 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t $DOCKER_USERNAME/saleor-api:develop .
-          docker build -t $DOCKER_USERNAME/saleor-dashboard:develop .
+          docker build -t $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG $API_IMAGE
+          docker build -t $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG $DASHBOARD_IMAGE
 
       - name: Install Trivy
         run: |
@@ -40,11 +45,11 @@ jobs:
 
       - name: Scan Docker Image
         run: |
-          trivy image $DOCKER_USERNAME/saleor-api:develop
-          trivy image $DOCKER_USERNAME/saleor-dashboard:develop
+          trivy image $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG
+          trivy image $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG
 
       - name: Push Docker Image
         run: |
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
-          docker push ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
+          echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+          docker push $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG
+          docker push $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG
