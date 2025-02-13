@@ -5,9 +5,6 @@ on:
     branches:
       - develop
 
-env:
-  TAG: develop
-
 jobs:
   analysis:
     name: "environment analysis"
@@ -32,20 +29,20 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:${{ env.TAG }} -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:${{ env.TAG }} .
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:${{ env.TAG }} -t ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:${{ env.TAG }} .
-                
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop -t ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
+
       - name: Install Trivy
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
 
       - name: Scan Docker Image
         run: |
-          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-api:${{ env.TAG }}
-          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:${{ env.TAG }}
+          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
+          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
 
       - name: Push Docker Image
         run: |
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push ${{ secrets.DOCKER_USERNAME }}/saleor-api:${{ env.TAG }} 
-          docker push ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:${{ env.TAG }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
+          docker push ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
