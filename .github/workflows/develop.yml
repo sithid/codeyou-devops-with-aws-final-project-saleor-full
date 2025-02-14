@@ -32,13 +32,13 @@ jobs:
       - name: Static Code Analysis
         run: |
           flake8 . > flake8_log.txt || true
-          echo "Static code analysis completed"
+          echo "Static code analysis completed - check logs for results"
           cat flake8_log.txt
 
       - name: Dependency Analysis
         run: |
           pip-audit > audit_log.txt || true
-          echo "Dependency analysis completed"
+          echo "Dependency analysis completed - check logs for results"
           cat audit_log.txt
 
       - name: Build Docker Image
@@ -54,10 +54,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install trivy
 
-      - name: Scan Docker Image
+      - name: Scan Docker Images
         run: |
-          trivy image $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG
-          trivy image $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG
+          trivy image $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG > api_security_scan.txt || true
+          trivy image $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG > dashboard_security_scan.txt || true
+          echo "Security scan completed - check logs for results"
+          cat api_security_scan.txt
+          cat dashboard_security_scan.txt
 
       - name: Push Docker Image
         run: |
