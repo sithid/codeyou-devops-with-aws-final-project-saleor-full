@@ -27,7 +27,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 120s
 
   dashboard:
     image: saleor-dashboard
@@ -42,7 +42,7 @@ services:
     networks:
       - saleor-backend-tier
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:80 || exit 1"]
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:80 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
