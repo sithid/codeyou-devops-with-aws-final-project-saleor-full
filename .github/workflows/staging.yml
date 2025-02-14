@@ -29,7 +29,20 @@ jobs:
           docker build -t $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG $API_IMAGE
           docker build -t $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG $DASHBOARD_IMAGE
 
-      - name: Docker Compose Up
+      - name: Docker Compose Up Database
+        run: docker compose up -d db
+        
+      - name: Wait for Database
+        run: |
+          echo "Waiting for database to be ready..."
+          sleep 10
+
+      - name: Initialize Database
+        run: |
+          docker compose run --rm api python manage.py migrate --noinput
+          docker compose run --rm api python manage.py populatedb --createsuperuser
+
+      - name: Docker Compose Up All Services
         run: docker compose up -d
 
       - name: Healthcheck
