@@ -35,7 +35,7 @@ jobs:
       - name: Healthcheck
         timeout-minutes: 5
         run: |
-          until [ "$(docker compose ps -a --format json | jq -r '.[] | select(.State == null or .Health == null or .State != "running" or .Health != "healthy") | length' | wc -l)" = "0" ]; do
+          until [ "$(docker compose ps -a --format json | jq -r '.[] | select(.State == null or .State != "running" or (.Health != null and .Health != "healthy")) | .Name' | wc -l)" = "0" ]; do
             echo "Waiting for containers to be healthy..."
             sleep 5
           done
