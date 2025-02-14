@@ -42,7 +42,9 @@ jobs:
       - name: Docker Compose Up
         run: docker compose up -d
 
-        # After what feels like forever, and after 
+      # After what feels like forever, and after countless attempts, I finally got this to work.
+      # Ultimately, I think the issue was that the database migrations are actually required for the endpoints
+      # to work.
       - name: Healthcheck
         timeout-minutes: 5
         run: |
