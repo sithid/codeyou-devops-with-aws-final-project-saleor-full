@@ -1,0 +1,50 @@
+name: "saleor pipeline -staging"
+
+on:
+  push:
+    branches:
+      - staging
+  pull_request:
+    branches:
+      - staging
+  workflow_dispatch:
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  API_IMAGE: saleor-api
+  DASHBOARD_IMAGE: saleor-dashboard
+  IMAGE_TAG: staging
+
+jobs:
+  analysis:
+    name: "environment analysis"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG $API_IMAGE
+          docker build -t $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG $DASHBOARD_IMAGE
+
+      - name: Docker Compose Up
+        run: docker compose up -d
+
+      - name: Healthcheck
+        timeout-minutes: 5
+        run: |
+          until [ "$(docker compose ps --format json | jq -r '[.[] | select(.Health != "healthy")] | length')" = "0" ]; do
+            echo "Waiting for containers to be healthy..."
+            sleep 5
+          done
+
+      - name: Docker Compose Down
+        run: docker compose down
+
+      - name: Push Docker Image
+        run: |
+          echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+          docker push $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG
+          docker push $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG
