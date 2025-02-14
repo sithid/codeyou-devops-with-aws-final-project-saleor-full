@@ -35,10 +35,14 @@ jobs:
       - name: Healthcheck
         timeout-minutes: 5
         run: |
-          until [ "$(docker compose ps -a --format json | jq -r '.[] | select(.State == null or .State != "running" or (.Health != null and .Health != "healthy")) | .Name' | wc -l)" = "0" ]; do
+          echo "Debug: Current docker compose output format:"
+          docker compose ps -a --format json
+          
+          until [ "$(docker compose ps -a --format '{{json .}}' | jq -r 'select(.State == null or .State != "running" or (.Health != null and .Health != "healthy")) | .Name' | wc -l)" = "0" ]; do
             echo "Waiting for containers to be healthy..."
             sleep 5
           done
+          echo "All containers are healthy."
 
       - name: Docker Compose Down
         run: docker compose down
