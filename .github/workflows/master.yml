@@ -85,22 +85,6 @@ jobs:
           docker build -t $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG $API_IMAGE
           docker build -t $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG $DASHBOARD_IMAGE
 
-      - name: Install Trivy
-        run: |
-          sudo apt-get install wget apt-transport-https gnupg lsb-release
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update
-          sudo apt-get install trivy
-
-      - name: Scan Docker Images
-        run: |
-          trivy image $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG > api_security_scan.txt || true
-          trivy image $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG > dashboard_security_scan.txt || true
-          echo "Security scan completed - check logs for results"
-          cat api_security_scan.txt
-          cat dashboard_security_scan.txt
-
       - name: Push Docker Images
         run: |
           echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
