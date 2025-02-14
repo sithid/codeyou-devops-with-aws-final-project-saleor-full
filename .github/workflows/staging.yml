@@ -18,7 +18,7 @@ env:
 
 jobs:
   analysis:
-    name: "environment analysis"
+    name: "Build Images & Healthchecks"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -32,19 +32,17 @@ jobs:
       - name: Docker Compose Up Database
         run: docker compose up -d db
         
-      - name: Wait for Database
+      - name: Migrations
         run: |
           echo "Waiting for database to be ready..."
-          sleep 10
-
-      - name: Initialize Database
-        run: |
+          sleep 10        
           docker compose run --rm api python manage.py migrate --noinput
           docker compose run --rm api python manage.py populatedb --createsuperuser
 
-      - name: Docker Compose Up All Services
+      - name: Docker Compose Up
         run: docker compose up -d
 
+        # After what feels like forever, and after 
       - name: Healthcheck
         timeout-minutes: 5
         run: |
