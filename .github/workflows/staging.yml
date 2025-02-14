@@ -28,10 +28,28 @@ jobs:
         run: |
           docker build -t $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG $API_IMAGE
           docker build -t $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG $DASHBOARD_IMAGE
+          
+      - name: Install Trivy
+        run: |
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+
+      - name: Scan Docker Images
+        run: |
+          trivy image $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG > api_security_scan.txt || true
+          trivy image $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG > dashboard_security_scan.txt || true
+          echo "Security scan completed - check logs for results"
+          cat api_security_scan.txt
+          cat dashboard_security_scan.txt
 
       - name: Docker Compose Up Database
         run: docker compose up -d db
-        
+      
+      # This little hack will ensure that the database
+      # is ready before we run the migrations and create a superuser.
       - name: Migrations
         run: |
           echo "Waiting for database to be ready..."
@@ -42,9 +60,9 @@ jobs:
       - name: Docker Compose Up
         run: docker compose up -d
 
-      # After what feels like forever, and after countless attempts, I finally got this to work.
-      # Ultimately, I think the issue was that the database migrations are actually required for the endpoints
-      # to work.
+      # This was the bane of my existence for a while but after countless attempts I finally got this to work.
+      # Ultimately, the issue was that the database migrations are actually required for the endpoints
+      # to work. The additional debug output will help us diagnose issues in the future.
       - name: Healthcheck
         timeout-minutes: 5
         run: |
@@ -73,7 +91,12 @@ jobs:
       - name: Docker Compose Down
         run: docker compose down
 
-      - name: Push Docker Image
+      # We only want to push the images if this is a push event, not a pull request.
+      # Nafarious people can't use pull requests to push to Docker Hub.
+      # If we push to Docker Hub in a pull request, then the images from THAT PR will be pushed
+      # and not the images from the staging branch.
+      - name: Push Docker Images
+        if: github.event_name == 'push'
         run: |
           echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
           docker push $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG
