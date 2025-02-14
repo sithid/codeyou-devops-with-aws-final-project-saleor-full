@@ -18,7 +18,7 @@ env:
 
 jobs:
   analysis:
-    name: "environment analysis"
+    name: "Build Images & Healthchecks"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -29,15 +29,43 @@ jobs:
           docker build -t $DOCKER_USERNAME/$API_IMAGE:$IMAGE_TAG $API_IMAGE
           docker build -t $DOCKER_USERNAME/$DASHBOARD_IMAGE:$IMAGE_TAG $DASHBOARD_IMAGE
 
+      - name: Docker Compose Up Database
+        run: docker compose up -d db
+        
+      - name: Migrations
+        run: |
+          echo "Waiting for database to be ready..."
+          sleep 10        
+          docker compose run --rm api python manage.py migrate --noinput
+          docker compose run --rm api python manage.py populatedb --createsuperuser
+
       - name: Docker Compose Up
         run: docker compose up -d
 
+        # After what feels like forever, and after 
       - name: Healthcheck
         timeout-minutes: 5
         run: |
-          until [ "$(docker compose ps -a --format json | jq -r '.[] | select(.State == null or .Health == null or .State != "running" or .Health != "healthy") | length' | wc -l)" = "0" ]; do
-            echo "Waiting for containers to be healthy..."
-            sleep 5
+          while true; do
+            echo "\n--- Container Status ---"
+            docker compose ps
+            
+            echo "\n--- Recent API Logs ---"
+            docker compose logs --tail=20 api
+            
+            echo "\n--- Recent Dashboard Logs ---"
+            docker compose logs --tail=10 dashboard
+            
+            echo "\n--- Database Status ---"
+            docker compose logs --tail=10 db
+            
+            if [ "$(docker compose ps -a --format '{{json .}}' | jq -r 'select(.State == null or .State != "running" or (.Health != null and .Health != "healthy")) | .Name' | wc -l)" = "0" ]; then
+              echo "All containers are healthy."
+              break
+            fi
+            
+            echo "\nWaiting for containers to be healthy..."
+            sleep 10
           done
 
       - name: Docker Compose Down
