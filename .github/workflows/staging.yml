@@ -38,11 +38,19 @@ jobs:
           echo "Debug: Current docker compose output format:"
           docker compose ps -a --format json
           
-          until [ "$(docker compose ps -a --format '{{json .}}' | jq -r 'select(.State == null or .State != "running" or (.Health != null and .Health != "healthy")) | .Name' | wc -l)" = "0" ]; do
+          while true; do
+            echo "Container Status:"
+            docker compose ps
+            echo "Container Logs:"
+            docker compose logs --tail=50
+            
+            if [ "$(docker compose ps -a --format '{{json .}}' | jq -r 'select(.State == null or .State != "running" or (.Health != null and .Health != "healthy")) | .Name' | wc -l)" = "0" ]; then
+              echo "All containers are healthy."
+              break
+            fi
             echo "Waiting for containers to be healthy..."
-            sleep 5
+            sleep 10
           done
-          echo "All containers are healthy."
 
       - name: Docker Compose Down
         run: docker compose down
