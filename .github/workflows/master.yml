@@ -6,6 +6,11 @@ on:
       - master
   workflow_dispatch:
 
+# May be required for the verify-staging job.
+permissions:
+  actions: read
+  contents: read
+
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -22,23 +27,33 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const stagingWorkflows = await github.rest.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.name,
-              workflow_id: 'saleor pipeline -staging',
-              branch: 'staging',
-              per_page: 1
-            });
+            console.log('Repository owner:', context.repo.owner);
+            console.log('Repository name:', context.repo.name);
             
-            if (stagingWorkflows.data.workflow_runs.length === 0) {
-              core.setFailed('No staging workflow runs found');
-              return;
-            }
-            
-            const latestRun = stagingWorkflows.data.workflow_runs[0];
-            if (latestRun.conclusion !== 'success') {
-              core.setFailed('Latest staging workflow did not succeed');
-              return;
+            try {
+              const stagingWorkflows = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.name,
+                workflow_id: 'saleor pipeline -staging',
+                branch: 'staging',
+                per_page: 1
+              });
+              
+              console.log('Workflow response:', JSON.stringify(stagingWorkflows, null, 2));
+              
+              if (stagingWorkflows.data.workflow_runs.length === 0) {
+                core.setFailed('No staging workflow runs found');
+                return;
+              }
+              
+              const latestRun = stagingWorkflows.data.workflow_runs[0];
+              if (latestRun.conclusion !== 'success') {
+                core.setFailed('Latest staging workflow did not succeed');
+                return;
+              }
+            } catch (error) {
+              console.log('Error details:', error);
+              core.setFailed(`Failed to verify staging workflow: ${error.message}`);
             }
 
   build-and-deploy:
