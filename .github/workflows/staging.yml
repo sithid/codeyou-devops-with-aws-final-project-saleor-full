@@ -36,18 +36,24 @@ jobs:
         timeout-minutes: 5
         run: |
           while true; do
-            echo "Unhealthy Container Status:"
-            docker compose ps | grep -i unhealthy
+            echo "\n--- Container Status ---"
+            docker compose ps
+            
+            echo "\n--- Recent API Logs ---"
+            docker compose logs --tail=20 api
+            
+            echo "\n--- Recent Dashboard Logs ---"
+            docker compose logs --tail=10 dashboard
+            
+            echo "\n--- Database Status ---"
+            docker compose logs --tail=10 db
             
             if [ "$(docker compose ps -a --format '{{json .}}' | jq -r 'select(.State == null or .State != "running" or (.Health != null and .Health != "healthy")) | .Name' | wc -l)" = "0" ]; then
               echo "All containers are healthy."
               break
             fi
             
-            echo "Checking logs for unhealthy containers:"
-            docker compose logs --tail=10 api
-            
-            echo "Waiting for containers to be healthy..."
+            echo "\nWaiting for containers to be healthy..."
             sleep 10
           done
 
