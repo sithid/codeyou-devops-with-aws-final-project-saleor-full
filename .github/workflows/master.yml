@@ -6,7 +6,6 @@ on:
       - master
   workflow_dispatch:
 
-# May be required for the verify-staging job.
 permissions:
   actions: read
   contents: read
@@ -27,23 +26,36 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            console.log('Full context:', JSON.stringify(context, null, 2));
-            console.log('Repository:', process.env.GITHUB_REPOSITORY);
-            
             const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-            console.log('Parsed owner:', owner);
-            console.log('Parsed repo:', repo);
+            console.log('Looking for staging workflow in:', owner, repo);
             
             try {
+              // First, list all workflows
+              const workflows = await github.rest.actions.listRepoWorkflows({
+                owner: owner,
+                repo: repo
+              });
+              
+              console.log('Available workflows:', workflows.data.workflows.map(w => w.name));
+              
+              // Find the staging workflow
+              const stagingWorkflow = workflows.data.workflows.find(w => w.name === 'saleor pipeline -staging');
+              
+              if (!stagingWorkflow) {
+                core.setFailed('Could not find staging workflow');
+                return;
+              }
+              
+              console.log('Found staging workflow:', stagingWorkflow.id);
+              
+              // Now get the runs using the workflow ID
               const stagingWorkflows = await github.rest.actions.listWorkflowRuns({
                 owner: owner,
                 repo: repo,
-                workflow_id: 'saleor pipeline -staging',
+                workflow_id: stagingWorkflow.id,
                 branch: 'staging',
                 per_page: 1
               });
-              
-              console.log('Workflow response:', JSON.stringify(stagingWorkflows, null, 2));
               
               if (stagingWorkflows.data.workflow_runs.length === 0) {
                 core.setFailed('No staging workflow runs found');
