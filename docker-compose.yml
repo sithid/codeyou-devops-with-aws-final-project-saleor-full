@@ -23,11 +23,11 @@ services:
     networks:
       - saleor-backend-tier
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/health-check || exit 1"]
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8000/health-check || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 40s
+      start_period: 60s
 
   dashboard:
     image: saleor-dashboard
