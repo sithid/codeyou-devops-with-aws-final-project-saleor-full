@@ -25,7 +25,7 @@ jobs:
             const stagingWorkflows = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.name,
-              workflow_id: '.github/workflows/staging.yml',
+              workflow_id: 'saleor pipeline -staging',
               branch: 'staging',
               per_page: 1
             });
