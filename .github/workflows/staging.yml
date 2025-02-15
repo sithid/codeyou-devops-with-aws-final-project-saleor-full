@@ -1,5 +1,7 @@
 name: "saleor pipeline -staging"
 
+# We need this pipeline to run on push, pull request, and workflow dispatch.
+# This will allow us to test the pipeline before merging.
 on:
   push:
     branches:

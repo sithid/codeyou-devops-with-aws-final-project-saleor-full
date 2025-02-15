@@ -56,7 +56,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - saleor-db:/var/lib/postgresql/data\
+      - saleor-db:/var/lib/postgresql/data
       - ./replica_user.sql:/docker-entrypoint-initdb.d/replica_user.sql
     restart: unless-stopped
     networks:
