@@ -17,6 +17,8 @@ env:
   DASHBOARD_IMAGE: saleor-dashboard
   IMAGE_TAG: latest
 
+# This job runs a script that checks if the staging workflow has run successfully.
+# If it has, the build-and-deploy job will run. If not, the workflow will fail.
 jobs:
   verify-staging:
     name: "Verify Staging Status"
